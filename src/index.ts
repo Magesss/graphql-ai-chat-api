@@ -683,7 +683,7 @@ function ChatComponent() {
 }
 
 function handleGraphiQLPlayground(corsHeaders: Record<string, string>): Response {
-	const playground = \`
+	const playground = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -717,7 +717,7 @@ function handleGraphiQLPlayground(corsHeaders: Record<string, string>): Response
                 tabs: [
                     {
                         endpoint: '/graphql',
-                        query: \\\`# 欢迎使用 GraphQL AI Chat API!
+                        query: \`# 欢迎使用 GraphQL AI Chat API!
 # 在这里编写您的查询和变更操作
 
 # 示例 1: 简单问候
@@ -749,7 +749,7 @@ query {
 #       }
 #     }
 #   }
-# }\\\`,
+# }\`,
                     },
                 ],
             })
@@ -757,7 +757,7 @@ query {
     </script>
 </body>
 </html>
-	\`;
+	`;
 
 	return new Response(playground, {
 		headers: {
