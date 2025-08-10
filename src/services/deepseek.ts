@@ -130,12 +130,24 @@ export class DeepSeekService {
 
               for (const line of lines) {
                 if (line.startsWith('data: ')) {
-                  const data = line.slice(6);
+                  const data = line.slice(6).trim();
+                  if (!data) continue;
+                  
                   if (data === '[DONE]') {
+                    if (!hasError) {
+                      controller.enqueue(JSON.stringify({
+                        type: 'end',
+                        timestamp: new Date().toISOString()
+                      }));
+                    }
                     controller.close();
                     return;
                   }
+
                   try {
+                    // 记录原始数据以便调试
+                    console.log('收到 SSE 数据:', data);
+                    
                     const parsed = JSON.parse(data);
                     
                     // 检查错误
@@ -168,11 +180,22 @@ export class DeepSeekService {
                       }));
                     }
                   } catch (e) {
-                    console.warn('解析 SSE 数据失败:', e);
-                    controller.enqueue(JSON.stringify({
-                      type: 'error',
-                      error: '数据解析错误'
-                    }));
+                    console.error('解析 SSE 数据失败:', {
+                      error: e,
+                      data: data,
+                      buffer: buffer
+                    });
+                    
+                    // 只有在确实是 JSON 解析错误时才发送错误消息
+                    if (e instanceof SyntaxError) {
+                      hasError = true;
+                      controller.enqueue(JSON.stringify({
+                        type: 'error',
+                        error: '数据解析错误：' + e.message
+                      }));
+                      controller.close();
+                      return;
+                    }
                   }
                 }
               }
@@ -258,6 +281,6 @@ export class DeepSeekService {
  * @param messages 聊天消息历史
  * @returns Promise<string> AI 回复内容
  */
-export async function callDeepSeekAPI(messages: ChatMessage[]): Promise<string> {
+export async function callDeepSeekAPI(messages: ChatMessage[]): Promise<ReadableStream<string>> {
   return DeepSeekService.getChatCompletion(messages);
 }
